@@ -2,7 +2,7 @@ package main
 
 type Migrator struct {
 	provider MigrationProvider
-	cassandra Cassandra
+	//cassandra Cassandra
 	AllowUpdatePassword bool
 }
 

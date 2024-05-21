@@ -4,30 +4,27 @@ import (
 	"github.com/gocql/gocql"
 )
 
-type Cassandra struct {
-	Session *gocql.Session
-}
-
-func NewCassandra(
+func NewPasswordSession(
 	user string,
 	pass string,
 	host string,
-) (*Cassandra, error) {
+	keyspace string,
+) (session *gocql.Session, err error) {
 	cluster := gocql.NewCluster(host)
 	cluster.Authenticator = gocql.PasswordAuthenticator{
 		Username: user,
 		Password: pass,
 	}
-	session, err := cluster.CreateSession()
+	if keyspace != "" {
+		cluster.Keyspace = keyspace
+	}
+	session, err = cluster.CreateSession()
 	if err != nil {
 		// Currently, gocql doesn't return a typed error when authentication fails.
 		// So we create our own based on the error string.
 		// See https://github.com/gocql/gocql/blob/v1.6.0/session.go#L187
 		err = ParseErrorString(err.Error())
 	}
-	return &Cassandra{session}, err
+	return
 }
-
-//func (c *CassandraConnector) NewCassandraConnector CassandraConnector, {
-//}
 
