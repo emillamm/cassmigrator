@@ -1,0 +1,40 @@
+name: Build
+
+on: [pull_request]
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        go-version: [ '1.22.x' ]
+
+    services:
+      cassandra:
+        image: ghcr.io/emillamm/cassandra-docker:4.1.2-f64d66d
+        env:
+          CASSANDRA_CLUSTER_NAME: testcluster
+          CASSANDRA_AUTHENTICATOR: PasswordAuthenticator
+          CASSANDRA_AUTHORIZER: CassandraAuthorizer
+          CASSANDRA_LISTEN_ADDRESS: localhost
+          MAX_HEAP_SIZE: 256M
+          HEAP_NEWSIZE: 100M
+        ports:
+          - 9042:9042
+        options: --health-cmd "cqlsh -e 'USE system;' -u cassandra -p cassandra" --health-timeout 5s --health-retries 8 --memory=3g
+
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: ${{ matrix.go-version }}
+      - name: Install dependencies
+        run: go get .
+      - name: Run tests
+        run: go test
+        env:
+          CASSANDRA_HOST: localhost:9042
+
